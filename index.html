@@ -5,144 +5,201 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#f3f4f7">
-    <title>Pro Scientific Calc</title>
+    <title>Calc Pro</title>
 	<link rel="icon" type="image/png" href="calculator.png">
 	<link rel="apple-touch-icon" href="calculator.png">
     <link rel="manifest" href="manifest.json">
     <style>
         :root {
             --bg: #f3f4f7;
+            --card-bg: #ffffff;
             --text: #1a1a1a;
             --btn-num: #ffffff;
-            --btn-sci: #f9f9f9;
+            --btn-sci: #f1f3f6;
             --btn-op: #e5e7eb;
-            --accent: #ff7e32; /* Das Orange aus deinem Bild */
+            --accent: #ff7e32;
         }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            margin: 0; background: var(--bg); color: var(--text);
-            font-family: -apple-system, sans-serif;
-            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+            margin: 0; padding: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Fest auf die volle Viewport-Höhe */
+            width: 100vw;
+            overflow: hidden;
         }
 
-        /* Verlauf & Display */
-        .history-area {
-            flex: 0 0 20%; padding: 20px;
-            display: flex; flex-direction: column; justify-content: flex-end;
-            gap: 5px; overflow-y: auto;
+        /* Bereich für Verlauf & Ergebnis */
+        .display-container {
+            flex: 1; /* Nimmt den restlichen Platz ein */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            min-height: 200px;
         }
-        .hist-item { color: #888; text-align: right; font-size: 0.9rem; cursor: pointer; }
-        
-        .display-area {
-            flex: 0 0 15%; padding: 0 20px 20px 20px;
-            display: flex; align-items: flex-end; justify-content: flex-end;
-        }
-        #main-display { font-size: 3.5rem; font-weight: 300; width: 100%; text-align: right; overflow-x: auto; }
 
-        /* Tasten-Grid (6 Spalten wie im Bild) */
+        .mini-history {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 10px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .hist-line {
+            text-align: right;
+            color: #8e8e93;
+            font-size: 1rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        #main-display {
+            text-align: right;
+            font-size: clamp(2rem, 10vw, 4rem); /* Text wird kleiner bei viel Inhalt */
+            font-weight: 300;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        /* Das Tastenfeld - optimiert für Mobile */
         .keypad {
-            flex: 1; display: grid;
+            background: var(--card-bg);
+            border-radius: 32px 32px 0 0;
+            padding: 15px 10px env(safe-area-inset-bottom); /* Berücksichtigt Notch unten */
+            display: grid;
             grid-template-columns: repeat(6, 1fr);
-            gap: 12px; padding: 15px; background: #fff;
-            border-radius: 30px 30px 0 0;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 8px;
+            height: 65%; /* Nimmt ca. 2/3 des Bildschirms ein */
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.05);
         }
 
         button {
-            border: none; border-radius: 50%; background: var(--btn-sci);
-            color: var(--text); font-size: 1.1rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            aspect-ratio: 1 / 1; transition: transform 0.1s;
-            -webkit-tap-highlight-color: transparent;
+            border: none;
+            border-radius: 50%;
+            background: var(--btn-sci);
+            color: var(--text);
+            font-size: clamp(0.8rem, 4vw, 1.1rem);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.1s, transform 0.05s;
         }
-        button:active { transform: scale(0.9); background: #eee; }
 
-        .num { background: var(--btn-num); font-weight: 500; font-size: 1.4rem; }
-        .op { background: var(--btn-op); color: var(--text); }
-        .equal { background: var(--accent); color: white; border-radius: 25px; aspect-ratio: auto; }
-        .sci { font-size: 0.95rem; }
+        button:active {
+            background: #d1d1d6;
+            transform: scale(0.92);
+        }
 
+        /* Spezielle Button-Farben */
+        .btn-num { background: var(--btn-num); font-size: 1.4rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn-op { background: var(--btn-op); }
+        .btn-equal { 
+            background: var(--accent); 
+            color: white; 
+            border-radius: 40px; 
+            grid-column: span 3; /* Wie im Screenshot */
+            font-size: 1.5rem;
+        }
+        
+        .wide { grid-column: span 3; border-radius: 40px; }
+
+        /* PWA Hinweis */
         #pwa-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); display: none; z-index: 1000;
+            background: rgba(0,0,0,0.85); display: none; z-index: 9999;
             justify-content: center; align-items: center; padding: 20px;
         }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; text-align: center; color: black; max-width: 300px; }
     </style>
 </head>
 <body>
 
     <div id="pwa-modal">
-        <div style="background:white; padding:30px; border-radius:20px; text-align:center; color: #000">
-            <h3>App installieren</h3>
-            <p id="pwa-text"></p>
-            <button onclick="closeModal()" style="background:var(--accent); color:white; padding:10px 20px; width:100%; border-radius:10px; aspect-ratio: auto;">OK</button>
+        <div class="modal-content">
+            <h3 style="margin-top:0">App installieren</h3>
+            <p id="pwa-desc"></p>
+            <button onclick="closePWA()" style="background:var(--accent); color:white; width:100%; height:45px; border-radius:10px;">OK</button>
         </div>
     </div>
 
-    <div class="history-area" id="history-box"></div>
-    <div class="display-area"><div id="main-display">0</div></div>
+    <div class="display-container">
+        <div class="mini-history" id="history-box"></div>
+        <div id="main-display">0</div>
+    </div>
 
     <div class="keypad">
-        <button class="sci" onclick="append('(')">(</button>
-        <button class="sci" onclick="append(')')">)</button>
-        <button class="sci" onclick="mem('MC')">MC</button>
-        <button class="sci" onclick="mem('M+')">M+</button>
-        <button class="sci" onclick="mem('M-')">M-</button>
-        <button class="sci" onclick="mem('MR')">MR</button>
+        <button onclick="append('(')">(</button>
+        <button onclick="append(')')">)</button>
+        <button onclick="mem('MC')">MC</button>
+        <button onclick="mem('M+')">M+</button>
+        <button onclick="mem('M-')">M-</button>
+        <button onclick="mem('MR')">MR</button>
 
-        <button class="sci" onclick="factorial()">x!</button>
-        <button class="sci" onclick="append('**2')">x²</button>
-        <button class="sci" onclick="append('**3')">x³</button>
-        <button class="sci" onclick="append('**')">xʸ</button>
-        <button class="sci" onclick="append('Math.E**')">eˣ</button>
-        <button class="sci" onclick="append('Math.PI')">π</button>
+        <button onclick="fact()">x!</button>
+        <button onclick="append('**2')">x²</button>
+        <button onclick="append('**3')">x³</button>
+        <button onclick="append('**')">xʸ</button>
+        <button onclick="append('Math.exp(')">eˣ</button>
+        <button onclick="append('Math.PI')">π</button>
 
-        <button class="sci" onclick="append('1/')">1/x</button>
-        <button class="sci" onclick="func('Math.sqrt')">√</button>
-        <button class="sci" onclick="func('Math.cbrt')">∛x</button>
-        <button class="sci" onclick="yroot()">ʸ√x</button>
-        <button class="sci" onclick="toggleInv()">Inv</button>
-        <button class="sci" onclick="toggleDeg()">Rad</button>
+        <button onclick="append('1/')">1/x</button>
+        <button onclick="append('Math.sqrt(')">√</button>
+        <button onclick="append('Math.cbrt(')">∛x</button>
+        <button onclick="yroot()">ʸ√x</button>
+        <button onclick="alert('Inverser Modus aktiv')">Inv</button>
+        <button onclick="toggleRad()">Rad</button>
 
-        <button class="sci" onclick="append('Math.E')">e</button>
-        <button class="sci" onclick="func('Math.log')">ln</button>
-        <button class="sci" onclick="func('Math.log10')">log</button>
-        <button class="sci" onclick="func('Math.sin')">sin</button>
-        <button class="sci" onclick="func('Math.cos')">cos</button>
-        <button class="sci" onclick="func('Math.tan')">tan</button>
+        <button onclick="append('Math.E')">e</button>
+        <button onclick="append('Math.log(')">ln</button>
+        <button onclick="append('Math.log10(')">log</button>
+        <button onclick="append('Math.sin(')">sin</button>
+        <button onclick="append('Math.cos(')">cos</button>
+        <button onclick="append('Math.tan(')">tan</button>
 
-        <button class="op" onclick="clearAll()">C</button>
-        <button class="op" onclick="append('%')">%</button>
-        <button class="op" onclick="backspace()">⌫</button>
-        <button class="op" colspan="3" style="grid-column: span 3; border-radius: 25px; aspect-ratio: auto;" onclick="append('/')">÷</button>
+        <button class="btn-op" style="color:#ef4444" onclick="clearAll()">C</button>
+        <button class="btn-op" onclick="append('%')">%</button>
+        <button class="btn-op" onclick="backspace()">⌫</button>
+        <button class="btn-op wide" onclick="append('/')">÷</button>
 
-        <button class="num" onclick="append('7')">7</button>
-        <button class="num" onclick="append('8')">8</button>
-        <button class="num" onclick="append('9')">9</button>
-        <button class="op" style="grid-column: span 3; border-radius: 25px; aspect-ratio: auto;" onclick="append('*')">×</button>
+        <button class="btn-num" onclick="append('7')">7</button>
+        <button class="btn-num" onclick="append('8')">8</button>
+        <button class="btn-num" onclick="append('9')">9</button>
+        <button class="btn-op wide" onclick="append('*')">×</button>
 
-        <button class="num" onclick="append('4')">4</button>
-        <button class="num" onclick="append('5')">5</button>
-        <button class="num" onclick="append('6')">6</button>
-        <button class="op" style="grid-column: span 3; border-radius: 25px; aspect-ratio: auto;" onclick="append('-')">−</button>
+        <button class="btn-num" onclick="append('4')">4</button>
+        <button class="btn-num" onclick="append('5')">5</button>
+        <button class="btn-num" onclick="append('6')">6</button>
+        <button class="btn-op wide" onclick="append('-')">−</button>
 
-        <button class="num" onclick="append('1')">1</button>
-        <button class="num" onclick="append('2')">2</button>
-        <button class="num" onclick="append('3')">3</button>
-        <button class="op" style="grid-column: span 3; border-radius: 25px; aspect-ratio: auto;" onclick="append('+')">+</button>
+        <button class="btn-num" onclick="append('1')">1</button>
+        <button class="btn-num" onclick="append('2')">2</button>
+        <button class="btn-num" onclick="append('3')">3</button>
+        <button class="btn-op wide" onclick="append('+')">+</button>
 
-        <button class="num" onclick="plusMinus()">+/-</button>
-        <button class="num" onclick="append('0')">0</button>
-        <button class="num" onclick="append('.')">,</button>
-        <button class="equal" style="grid-column: span 3;" onclick="calculate()">=</button>
+        <button class="btn-num" onclick="plusMinus()">+/-</button>
+        <button class="btn-num" onclick="append('0')">0</button>
+        <button class="btn-num" onclick="append('.')">,</button>
+        <button class="btn-equal" onclick="calculate()">=</button>
     </div>
 
     <script>
         const display = document.getElementById('main-display');
-        const historyBox = document.getElementById('history-box');
+        const histBox = document.getElementById('history-box');
         let isRes = false;
         let memory = 0;
-        let history = JSON.parse(localStorage.getItem('calc_v4')) || [];
+        let history = JSON.parse(localStorage.getItem('honor_calc_v5')) || [];
 
         function append(v) {
             if (isRes && !isNaN(v)) { display.innerText = '0'; isRes = false; }
@@ -151,62 +208,55 @@
             isRes = false;
         }
 
-        function func(f) { display.innerText = f + "(" + display.innerText + ")"; }
-
         function calculate() {
             try {
                 let expr = display.innerText.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
-                let res = eval(expr);
-                let fRes = Number.isInteger(res) ? res : parseFloat(res.toFixed(8));
-                saveHist(display.innerText, fRes);
-                display.innerText = fRes;
+                let r = eval(expr);
+                let f = Number.isInteger(r) ? r : parseFloat(r.toFixed(8));
+                saveH(display.innerText, f);
+                display.innerText = f;
                 isRes = true;
-            } catch { display.innerText = "Fehler"; isRes = true; }
+            } catch { display.innerText = "Error"; isRes = true; }
         }
 
-        function saveHist(e, r) {
+        function saveH(e, r) {
             history.unshift({e, r});
-            localStorage.setItem('calc_v4', JSON.stringify(history.slice(0, 10)));
-            renderHist();
+            localStorage.setItem('honor_calc_v5', JSON.stringify(history.slice(0, 20)));
+            renderH();
         }
 
-        function renderHist() {
-            historyBox.innerHTML = history.slice(0, 6).reverse().map(h => 
-                `<div class="hist-item" onclick="loadHist('${h.r}')">${h.e} = ${h.r}</div>`
+        function renderH() {
+            histBox.innerHTML = history.slice(0, 6).reverse().map(h => 
+                `<div class="hist-line" onclick="loadH('${h.r}')">${h.e} = ${h.r}</div>`
             ).join('');
         }
 
-        function loadHist(v) { display.innerText = v; isRes = true; }
+        function loadH(v) { display.innerText = v; isRes = true; }
         function clearAll() { display.innerText = '0'; isRes = false; }
         function backspace() { display.innerText = display.innerText.slice(0, -1) || '0'; }
-        
-        function factorial() {
+        function plusMinus() { display.innerText = (parseFloat(display.innerText) * -1).toString(); }
+        function mem(t) {
+            let v = parseFloat(display.innerText);
+            if(t==='M+') memory += v; if(t==='M-') memory -= v;
+            if(t==='MC') memory = 0; if(t==='MR') { display.innerText = memory; isRes = true; }
+        }
+        function fact() {
             let n = parseInt(display.innerText);
             let r = 1; for(let i=2; i<=n; i++) r *= i;
             display.innerText = r; isRes = true;
         }
 
-        function mem(type) {
-            let val = parseFloat(display.innerText);
-            if(type === 'M+') memory += val;
-            if(type === 'M-') memory -= val;
-            if(type === 'MC') memory = 0;
-            if(type === 'MR') { display.innerText = memory; isRes = true; }
-        }
-
-        function plusMinus() { display.innerText = (parseFloat(display.innerText) * -1).toString(); }
-
-        // PWA Register
+        // PWA Setup
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
         window.onload = () => {
-            renderHist();
-            if(!localStorage.getItem('pwa_done') && !window.navigator.standalone) {
+            renderH();
+            if(!localStorage.getItem('pwa_v5') && !window.navigator.standalone) {
                 document.getElementById('pwa-modal').style.display = 'flex';
-                document.getElementById('pwa-text').innerText = /iPhone|iPad/.test(navigator.userAgent) ? 
-                    'Teilen -> Zum Home-Bildschirm' : 'Optionen -> App installieren';
+                document.getElementById('pwa-desc').innerText = /iPhone|iPad/.test(navigator.userAgent) ? 
+                    'Klicke auf "Teilen" und dann "Zum Home-Bildschirm".' : 'Klicke auf die 3 Punkte und "App installieren".';
             }
         };
-        function closeModal() { localStorage.setItem('pwa_done', '1'); document.getElementById('pwa-modal').style.display='none'; }
+        function closePWA() { localStorage.setItem('pwa_v5', '1'); document.getElementById('pwa-modal').style.display='none'; }
     </script>
 </body>
 </html>
