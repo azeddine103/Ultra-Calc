@@ -1,6 +1,6 @@
 {
-  "name": "Pro Scientific Calculator",
-  "short_name": "CalcPro",
+  "name": "Scientific Calculator",
+  "short_name": "SciCalc",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#0f172a",
